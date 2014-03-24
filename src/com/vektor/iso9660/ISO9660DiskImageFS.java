@@ -23,9 +23,6 @@ public class ISO9660DiskImageFS {
 		this.size = size;
 		this.name = name;
 		this.raf = raf;
-		System.out.println("New " + (isDir ? "Directory" : "File") + "! "
-				+ name + " starts at sector:" + startSector + " size:" + size
-				+ " bytes.");
 		if (isDir)
 			seekFiles();
 	}
@@ -80,7 +77,6 @@ public class ISO9660DiskImageFS {
 			sb.append((char) data[i]);
 		}
 		if ((sb.toString().length() == 1) && (sb.charAt(0) == 0)) {
-			System.out.println("OUT");
 			return;
 		}
 		String nm = dir ? sb.toString() : sb.toString().substring(0,
@@ -117,9 +113,6 @@ public class ISO9660DiskImageFS {
 		if ((this.files != null) && (this.files.containsKey(filePath))
 				&& (!((ISO9660DiskImageFS) this.files.get(filePath)).isDir)) {
 			try {
-				System.out.println("RAWDiskImageFS - CWD: "
-						+ (this.name.isEmpty() ? "/" : this.name) + " Found:"
-						+ filePath);
 				byte[] fileData = new byte[((ISO9660DiskImageFS) this.files
 						.get(filePath)).size];
 

@@ -22,8 +22,6 @@ public class RAWDiskImage {
 		try {
 			this.raf = new RandomAccessFile(this.isopath, "r");
 			this.raf.seek(SECTORSIZE * nSector);
-			System.out.println(this.isopath + " has " + this.raf.length()
-					/ SECTORSIZE + " sectors.");
 			byte[] sector = new byte[SECTORSIZE];
 			while (this.raf.read(sector) > 0) {
 				if ((isHeader(Arrays.copyOfRange(sector, 24, 30)))

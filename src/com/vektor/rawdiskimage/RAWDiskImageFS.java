@@ -113,9 +113,6 @@ public class RAWDiskImageFS {
 		if ((this.files != null) && (this.files.containsKey(filePath))
 				&& (!((RAWDiskImageFS) this.files.get(filePath)).isDir)) {
 			try {
-				System.out.println("RAWDiskImageFS - CWD: "
-						+ (this.name.isEmpty() ? "/" : this.name) + " Found:"
-						+ filePath);
 				byte[] fileData = new byte[((RAWDiskImageFS) this.files
 						.get(filePath)).size];
 				System.out
