@@ -17,16 +17,28 @@ Sample class:
 
 ```java
 public static void main(String [] args){
-	String isopath = "/Users/alessandro/Downloads/Space Hulk.iso";
+	String isopath = "/Users/user/Downloads/DiskImage.iso";
+	String isopath2 = "/Users/user/Downloads/DiskImage.bin"; //or .img
+	
 	ISO9660DiskImage f = new ISO9660DiskImage(isopath);
-		File output = new File("/Users/alessandro/Documents/test.txt");
+		File output = new File("/Users/user/Documents/test.txt");
 		FileOutputStream out;
 		try {
 			out = new FileOutputStream(output);
-			out.write(f.getFile("SYSTEM.CNF"));
+			out.write(f.getFile("/path/to/file.ext"));
 			out.flush();
 			out.close();
 		} catch (FileNotFoundException e) {
 		} catch (IOException e) {}
-	}
+	RAWDiskImage g = new RAWDiskImage(isopath2);
+		File output2 = new File("/Users/user/Documents/test2.txt");
+		FileOutputStream out2;
+		try {
+			out2 = new FileOutputStream(output2);
+			out2.write(f.getFile("/path/to/file.ext"));
+			out2.flush();
+			out2.close();
+		} catch (FileNotFoundException e) {
+		} catch (IOException e) {}
+}
 ```
