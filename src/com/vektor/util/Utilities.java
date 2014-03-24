@@ -46,7 +46,7 @@ public class Utilities {
 		return 0;
 	}
 
-	private static boolean checkPowerOfTwo(int number) {
+	public static boolean checkPowerOfTwo(int number) {
 		if (number <= 0) {
 			throw new IllegalArgumentException("number: " + number);
 		}

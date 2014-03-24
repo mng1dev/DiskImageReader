@@ -1,19 +1,21 @@
-package com.vektor.iso9660;
+package com.vektor.diskimagereader.rawdiskimage;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
+import java.util.HashMap;
 
+import com.vektor.diskimagereader.common.IDiskImage;
 import com.vektor.util.Utilities;
 
-public class ISO9660DiskImage {
+public class RAWDiskImage implements IDiskImage{
 	private String isopath;
-	private ISO9660DiskImageFS rootFS;
+	private RAWDiskImageFS rootFS;
 	private RandomAccessFile raf;
-	private static final int SECTORSIZE = 2048;
+	private static final int SECTORSIZE = 2352;
 
-	public ISO9660DiskImage(String isopath) {
+	public RAWDiskImage(String isopath) {
 		this.isopath = isopath;
 		readSector(16);
 	}
@@ -24,27 +26,26 @@ public class ISO9660DiskImage {
 			this.raf.seek(SECTORSIZE * nSector);
 			byte[] sector = new byte[SECTORSIZE];
 			while (this.raf.read(sector) > 0) {
-				if ((isHeader(Arrays.copyOfRange(sector, 0, 6)))
-						&& (isPrimaryVolumeDescriptor(sector[0]))) {
+				if ((isHeader(Arrays.copyOfRange(sector, 24, 30)))
+						&& (isPrimaryVolumeDescriptor(sector[24]))) {
 					break;
 				}
-
 			}
-
+			byte[] usefulData = Arrays.copyOfRange(sector, 24, 2072);
+			sector = null;
 			System.gc();
-			this.rootFS = createRootFolder(this.raf, sector);
+			this.rootFS = createRootFolder(this.raf, usefulData);
 		} catch (FileNotFoundException localFileNotFoundException) {
 		} catch (IOException localIOException) {
 		}
 	}
 
-	private ISO9660DiskImageFS createRootFolder(RandomAccessFile raf,
-			byte[] data) {
+	private RAWDiskImageFS createRootFolder(RandomAccessFile raf, byte[] data) {
 		int startSector = Utilities.readLittleEndianWord(Arrays.copyOfRange(
 				data, 158, 162));
 		int size = Utilities.readLittleEndianWord(Arrays.copyOfRange(data, 166,
 				170));
-		return new ISO9660DiskImageFS(startSector, size, "", true, raf);
+		return new RAWDiskImageFS(startSector, size, "", true, raf);
 	}
 
 	private boolean isHeader(byte[] header) {
@@ -70,5 +71,8 @@ public class ISO9660DiskImage {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+	public HashMap<String, RAWDiskImageFS> getFiles(){
+		return rootFS.getFiles();
 	}
 }

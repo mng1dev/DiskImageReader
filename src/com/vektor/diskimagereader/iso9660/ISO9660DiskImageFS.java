@@ -1,34 +1,34 @@
-package com.vektor.rawdiskimage;
+package com.vektor.diskimagereader.iso9660;
 
 import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.util.Arrays;
 import java.util.HashMap;
 
+import com.vektor.diskimagereader.common.IDiskImageFS;
 import com.vektor.util.Utilities;
 
-public class RAWDiskImageFS {
-	private static final int SECTORSIZE = 2352;
+public class ISO9660DiskImageFS implements IDiskImageFS{
+	private static final int SECTORSIZE = 2048;
 	private boolean isDir;
 	private RandomAccessFile raf;
 	int startSector;
 	int size;
 	String name;
-	private HashMap<String, RAWDiskImageFS> files;
+	private HashMap<String, ISO9660DiskImageFS> files;
 
-	public RAWDiskImageFS(int startSector, int size, String name,
+	public ISO9660DiskImageFS(int startSector, int size, String name,
 			boolean isDir, RandomAccessFile raf) {
 		this.startSector = startSector;
 		this.isDir = isDir;
 		this.size = size;
 		this.name = name;
 		this.raf = raf;
-
 		if (isDir)
 			seekFiles();
 	}
 
-	public HashMap<String, RAWDiskImageFS> getFiles() {
+	public HashMap<String, ISO9660DiskImageFS> getFiles() {
 		if (this.isDir) {
 			return this.files;
 		}
@@ -37,15 +37,15 @@ public class RAWDiskImageFS {
 
 	public void addFile(int startSector, int size, String name, boolean isDir) {
 		if ((this.files == null) && (isDir))
-			this.files = new HashMap<String, RAWDiskImageFS>();
-		this.files.put(name, new RAWDiskImageFS(startSector, size, name, isDir,
-				this.raf));
+			this.files = new HashMap<String, ISO9660DiskImageFS>();
+		this.files.put(name, new ISO9660DiskImageFS(startSector, size, name,
+				isDir, this.raf));
 	}
 
 	public void seekFiles() {
 		try {
 			byte[] data = new byte[this.size];
-			this.raf.seek(SECTORSIZE * this.startSector + 24);
+			this.raf.seek(SECTORSIZE * this.startSector);
 			this.raf.read(data);
 			int count = 0;
 			for (int index = 0; index < data.length; index++) {
@@ -77,8 +77,9 @@ public class RAWDiskImageFS {
 		for (int i = 33; i < 33 + length; i++) {
 			sb.append((char) data[i]);
 		}
-		if ((sb.toString().length() == 1) && (sb.charAt(0) == 0))
+		if ((sb.toString().length() == 1) && (sb.charAt(0) == 0)) {
 			return;
+		}
 		String nm = dir ? sb.toString() : sb.toString().substring(0,
 				sb.toString().length() - 2);
 
@@ -86,15 +87,15 @@ public class RAWDiskImageFS {
 		int sz = Utilities.readLittleEndianWord(Arrays
 				.copyOfRange(data, 10, 14));
 		if (this.files == null)
-			this.files = new HashMap<String, RAWDiskImageFS>();
-		this.files.put(nm, new RAWDiskImageFS(ss, sz, nm, dir, this.raf));
+			this.files = new HashMap<String, ISO9660DiskImageFS>();
+		this.files.put(nm, new ISO9660DiskImageFS(ss, sz, nm, dir, this.raf));
 	}
 
 	public boolean existsFile(String filePath) {
 		if (this.files == null)
 			return false;
 		if ((this.files.containsKey(filePath))
-				&& (!((RAWDiskImageFS) this.files.get(filePath)).isDir))
+				&& (!((ISO9660DiskImageFS) this.files.get(filePath)).isDir))
 			return true;
 		if (filePath.contains(System.getProperty("file.separator"))) {
 			String folder = filePath.substring(0,
@@ -102,7 +103,7 @@ public class RAWDiskImageFS {
 			if (this.files.containsKey(folder)) {
 				String file = filePath.substring(1 + filePath.indexOf(System
 						.getProperty("file.separator")));
-				return ((RAWDiskImageFS) this.files.get(folder))
+				return ((ISO9660DiskImageFS) this.files.get(folder))
 						.existsFile(file);
 			}
 		}
@@ -111,17 +112,12 @@ public class RAWDiskImageFS {
 
 	public byte[] getFile(String filePath) {
 		if ((this.files != null) && (this.files.containsKey(filePath))
-				&& (!((RAWDiskImageFS) this.files.get(filePath)).isDir)) {
+				&& (!((ISO9660DiskImageFS) this.files.get(filePath)).isDir)) {
 			try {
-				byte[] fileData = new byte[((RAWDiskImageFS) this.files
+				byte[] fileData = new byte[((ISO9660DiskImageFS) this.files
 						.get(filePath)).size];
-				System.out
-						.println("Size "
-								+ ((RAWDiskImageFS) this.files.get(filePath)).size
-								+ " SS: "
-								+ ((RAWDiskImageFS) this.files.get(filePath)).startSector);
-				this.raf.seek(((RAWDiskImageFS) this.files.get(filePath)).startSector
-						* SECTORSIZE + 24);
+
+				this.raf.seek(((ISO9660DiskImageFS) this.files.get(filePath)).startSector * SECTORSIZE);
 				this.raf.read(fileData);
 
 				return fileData;
@@ -134,9 +130,30 @@ public class RAWDiskImageFS {
 			if (this.files.containsKey(folder)) {
 				String file = filePath.substring(1 + filePath.indexOf(System
 						.getProperty("file.separator")));
-				return ((RAWDiskImageFS) this.files.get(folder)).getFile(file);
+				return ((ISO9660DiskImageFS) this.files.get(folder))
+						.getFile(file);
 			}
 		}
 		return new byte[0];
+	}
+
+	@Override
+	public boolean isDir() {
+		return isDir;
+	}
+
+	@Override
+	public int getStartSector() {
+		return this.startSector;
+	}
+
+	@Override
+	public int getSize() {
+		return this.size;
+	}
+
+	@Override
+	public String getName() {
+		return this.name;
 	}
 }
